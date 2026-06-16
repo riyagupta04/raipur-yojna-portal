@@ -1,0 +1,17 @@
+services:
+  payload:
+    image: node:22-alpine
+    ports:
+      - "3123:3000"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - sqlite_data:/app/data
+    working_dir: /app
+    command: sh -c "mkdir -p /app/data && corepack enable && corepack prepare pnpm@10 --activate && pnpm install --frozen-lockfile && pnpm build && pnpm start"
+    env_file:
+      - .env
+
+volumes:
+  node_modules:
+  sqlite_data:

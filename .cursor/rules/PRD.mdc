@@ -1,0 +1,158 @@
+---
+description: Yojna Portal project context - product goals, content model, site map, and design system for the Raipur Government scheme catalog built on Payload CMS
+globs:
+alwaysApply: true
+---
+
+# Yojna Portal - Product Requirements & Architecture
+
+> Single source of truth for the Yojna Portal project. Read this before architecting pages, collections, fields, hooks, or UI. Built on the existing Payload CMS Website Template (Next.js App Router + SQLite + shadcn/ui + Tailwind).
+
+## 1. Product Overview
+
+**Yojna Portal** is a public, blog-style web portal for the **Government of Raipur** that catalogs civic schemes ("yojnas") and publishes related news/updates. It helps citizens discover schemes by category, understand eligibility and benefits, and learn how to apply.
+
+- **Audience:** Raipur citizens (primary), government staff/administrators (content authors), press/partners (secondary).
+- **Value:** Turn a scattered list of ~85 schemes into a searchable, categorized, accessible catalog with authoritative scheme detail pages and a news feed.
+- **Platform:** Payload CMS (admin + API) with a Next.js App Router front-end. Content authored by Raipur staff in the admin panel; rendered statically with on-demand revalidation.
+
+## 2. Goals & Non-Goals
+
+### Goals
+- Catalog every yojna with a consistent, scheme-specific detail page (department, beneficiaries, eligibility, benefits, how to apply, status).
+- Browse and filter yojnas by category; full-text search across yojnas and news.
+- Government-grade accessibility (WCAG 2.1 AA), mobile-first, fast static pages.
+- CMS-managed taxonomy so categories and schemes can change without code edits.
+- Bilingual-ready content (Hindi / English) - see open question in section 8.
+
+### Non-Goals (initial release)
+- No citizen login, application submission, or payment flows (link out to official portals via `externalLink`).
+- No multi-tenant / multi-district support (Raipur only).
+- No comment system or user-generated content.
+
+## 3. Category Taxonomy
+
+Source of truth: `ProjectCtg.xlsx` (8 category columns, 85 unique schemes; one duplicate "Aao Khud Ko Parkhein" in Governance was de-duplicated). Categories are **CMS-managed** (the `categories` collection), seeded from this list. The Excel is canonical; the original brief mentioned "5 categories" - see the open decision below and the proposed 5-group consolidation.
+
+### Canonical 8 categories (from ProjectCtg.xlsx)
+
+1. **Health, Nutrition & Wellness** (14): Zindagi Muskuraayegi, Dhadkan, Jeevan, Pulse, Golden Hour, Water to All, Project Lifestyle, Project Chhaav, MediGuru, Red Cross, Project Shay Mitra, Project Distri, Raksha, Suraksha
+2. **Education, Skill & Youth** (14): Smriti Pustakalaya, Daksh, Project Utkarsh, Padhega Raipur Badhega Raipur, Project Yuva 2.0, Harihar Pathshala, Career Guru, Project Anubhav, Tejas, Project G2, Know Your Army, Project Antariksh, Pai Pai, Aao Saksham Bane
+3. **Women Empowerment & Livelihood** (7): Khana Khazana, Hunar, Business Didi, Jhariya, Trash to Cash, Pink Didi, Lakhpati Didi
+4. **Agriculture, Development & Environment** (8): Mera Gaon Meri Pehchan, Clean, Urvi, Green Palna Yojana, Har Ghar Munga, Project Nirman, Project Nano, Project Amrit
+5. **Governance & Service Delivery** (13): Aao Khud Ko Parkhein, Alert, Dastavez, Shreshth, Project SARAL, Project Handy, Jandarshan, Call Centre, BPO, Project Susashan Rath, Project sugaam, Team Prahari, Sampoorna
+6. **Social Welfare & Community** (15): Samadhan, Aangan, Mission 45, Project Sahara, Project Udgosh, Project Divyadhun, Vijayi Bhav, Project Dhwani, Aao Baante Khushiyan, Rahat, Project Maa, Project Badlaav, Project Sukaniya, Project mukti, Project Traffic Warden
+7. **Child Development** (4): Chhuk Chhuk, U Shape, Chiranjeevi, Project Noni
+8. **Tourism, Culture & Startups** (10): Dadhichi, Ghanti, Virasat, Global Gaon, Kala Kendra, Sanskriti, Samvidhan Park, Project Aao khel Khele, Innovate, Arambh
+
+### Proposed 5-group consolidation (pending approval)
+
+If the portal must show exactly 5 categories, merge the 8 into 5 thematic groups:
+
+| # | Consolidated category | Merged from |
+|---|----------------------|-------------|
+| 1 | Health & Wellness | Health, Nutrition & Wellness |
+| 2 | Education, Skill & Youth | Education, Skill & Youth |
+| 3 | Women & Child Development | Women Empowerment & Livelihood + Child Development |
+| 4 | Governance & Community Welfare | Governance & Service Delivery + Social Welfare & Community |
+| 5 | Development, Culture & Startups | Agriculture, Development & Environment + Tourism, Culture & Startups |
+
+Implementation note: support consolidation without losing the original grouping by giving `categories` an optional self-relationship (`parent`) or a `group` select field, so the 8 detailed categories can roll up into 5 display groups.
+
+## 4. Content Model (Payload CMS)
+
+Existing template collections: `pages`, `posts`, `media`, `categories`, `users`; globals `header`, `footer` (see `src/payload.config.ts`). Reuse them and add a dedicated `yojnas` collection.
+
+```mermaid
+graph TD
+  Cat["categories (8 seeded, CMS-managed)"] -->|relationship hasMany| Yoj["yojnas (scheme catalog)"]
+  Yoj -->|upload| Media["media"]
+  Yoj -->|optional relatedNews| Posts["posts (news/updates)"]
+  Cat -->|optional| Posts
+  Pages["pages (Layout Builder)"] -->|blocks| Home["Home + landing pages"]
+  Cat -.->|optional parent rollup| Cat
+```
+
+### `yojnas` (new collection)
+Scheme catalog. Mirror the `posts` collection conventions (draft/publish via `versions.drafts`, `slugField`, SEO tab, `populatePublishedAt`, `revalidate` hooks) for consistency.
+
+Fields:
+- `title` (text, required) - scheme name.
+- `slug` (slugField) - URL.
+- `category` (relationship -> `categories`, hasMany: false or true if a scheme spans categories; required).
+- `summary` (textarea) - one-line description for cards and meta.
+- `heroImage` (upload -> `media`).
+- `content` (richText / lexical) - full description.
+- `department` (text) - owning Raipur department.
+- `beneficiaries` (textarea) - who it is for.
+- `eligibility` (richText or textarea).
+- `benefits` (richText or textarea).
+- `howToApply` (richText) - steps; may link out.
+- `status` (select: `active` | `upcoming` | `closed`; default `active`).
+- `launchDate` (date, optional).
+- `externalLink` (text/url, optional) - official application/source page.
+- `relatedNews` (relationship -> `posts`, hasMany, optional).
+- SEO fields via the SEO plugin (meta tab), like `posts`.
+
+Admin: `useAsTitle: 'title'`; default columns `title`, `category`, `status`, `updatedAt`; access read = `anyone`, write = `authenticated` (match template `access/` helpers).
+
+### `categories` (extend existing)
+Currently `title` + `slug` only (`src/collections/Categories.ts`). Extend with:
+- `description` (textarea, optional) - shown on category landing.
+- `icon` or `color` (text/select, optional) - for category color-coding in UI.
+- `group` (select, optional) OR `parent` (relationship -> `categories`, optional) - to support the 5-group rollup in section 3.
+
+### `posts` (reuse as-is)
+News, announcements, and updates. Optionally relate to a `category` and to `yojnas` via `relatedNews`.
+
+### `pages` (reuse as-is)
+Home and static/landing pages via the Layout Builder blocks.
+
+### Seeding
+Extend the existing seed flow (`src/app/(frontend)/next/seed/route.ts` and `src/endpoints/seed/`) to create the 8 categories and a representative set of yojnas from `ProjectCtg.xlsx`.
+
+## 5. Site Map & Page Responsibilities
+
+```mermaid
+graph TD
+  Home["/ Home"] --> Yojnas["/yojnas listing + filter + search"]
+  Home --> CatLand["/categories/[slug] category landing"]
+  Yojnas --> YojDetail["/yojnas/[slug] scheme detail"]
+  CatLand --> YojDetail
+  Home --> News["/posts news feed (existing)"]
+  News --> PostDetail["/posts/[slug] (existing)"]
+  Home --> Search["/search (existing)"]
+```
+
+- `/` Home (Pages + Layout Builder): hero/mission banner, the category grid (8 or 5), featured/active yojnas, latest news, search entry.
+- `/yojnas` Listing: card grid of all yojnas with category filter, status filter, and search; paginated like `/posts`.
+- `/yojnas/[slug]` Detail: hero, summary, department/beneficiaries/eligibility/benefits/how-to-apply, status badge, external link, related news.
+- `/categories/[slug]` Category landing: category description + its yojnas.
+- `/posts`, `/posts/[slug]`, `/search`: reuse existing template routes for news and search.
+
+Header/Footer globals updated with Yojna Portal nav: Home, Yojnas, Categories, News, Search.
+
+## 6. Design System, Accessibility & i18n
+
+- **Aesthetic:** trustworthy government portal - clean, high-contrast, restrained. A measured tri-color-inspired accent palette (saffron/green accents on a neutral base), not loud. Per-category color-coding for wayfinding.
+- **Layout:** card-based catalog, prominent search + filters, generous spacing, clear hierarchy. Mobile-first.
+- **Components:** build on the template's existing shadcn/ui + TailwindCSS; reuse `Card`, `Media`, pagination, and rich-text rendering.
+- **Accessibility:** WCAG 2.1 AA - semantic landmarks, keyboard navigable filters, visible focus states, alt text on all media, color contrast >= 4.5:1, status conveyed by text + color (not color alone).
+- **i18n readiness:** model and UI should not hardcode English-only strings; plan for Hindi/English (scope TBD in section 8). Use Unicode-safe slugs.
+- **Performance:** static generation + on-demand revalidation (existing template caching strategy); optimized `media` images.
+
+## 7. Implementation Phases
+
+1. **Data model:** add `yojnas` collection; extend `categories`; register `yojnas` in `src/payload.config.ts`; regenerate `payload-types.ts`.
+2. **Seed:** populate 8 categories + sample yojnas from `ProjectCtg.xlsx`.
+3. **Routes/UI:** build `/yojnas`, `/yojnas/[slug]`, `/categories/[slug]`; home category grid + featured/news sections; update Header/Footer nav.
+4. **Search & filters:** wire yojnas into the search plugin; add category/status filters.
+5. **Design polish:** category color-coding, status badges, accessibility pass, responsive QA.
+6. **i18n:** (conditional) add Hindi/English fields or localization once scope is confirmed.
+
+## 8. Open Decisions
+
+- **Categories 8 vs 5:** Excel defines 8; brief said 5. Default is to seed all 8 and support an optional 5-group rollup (section 3). Confirm which is the primary public-facing count.
+- **Yojnas collection vs reuse Posts:** This PRD specifies a dedicated `yojnas` collection (scheme-specific fields) while keeping `posts` for news. Confirm.
+- **Bilingual scope:** Hindi + English (full localization) vs English-first with Hindi later.
+- **Category spanning:** can a single yojna belong to multiple categories (`hasMany`) or exactly one?
