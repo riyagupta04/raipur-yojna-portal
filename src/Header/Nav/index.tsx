@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 
 const fallbackNavItems = [
   { label: 'Home', url: '/' },
-  { label: 'Yojnas', url: '/yojnas' },
+  // { label: 'Yojnas', url: '/yojnas' },
   { label: 'News', url: '/posts' },
 ]
 
