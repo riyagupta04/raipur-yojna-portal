@@ -8,7 +8,7 @@ import { YojnaFilters } from '@/components/YojnaFilters'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 export const revalidate = 600
 
 type Args = {
@@ -71,29 +71,14 @@ const yojnaCount = await payload.count({
       },
     })
   }
-
-  if (q) {
-    andFilters.push({
-      or: [
-        {
-          title: {
-            contains: q,
-          },
-        },
-        {
-          summary: {
-            contains: q,
-          },
-        },
-        {
-          department: {
-            contains: q,
-          },
-        },
-      ],
-    })
-  }
-
+if (q) {
+  andFilters.push({
+    title: {
+      like: q,
+    },
+  })
+}
+  
   const yojnas = await payload
     .find({
       collection: 'yojnas',
@@ -126,7 +111,17 @@ const yojnaCount = await payload.count({
       prevPage: null,
       totalPages: 0,
     }))
+let filteredDocs = yojnas.docs
 
+if (q.trim()) {
+  const searchText = q.toLowerCase()
+
+  filteredDocs = yojnas.docs.filter((yojna: any) =>
+    yojna.title?.toLowerCase().includes(searchText) ||
+    yojna.summary?.toLowerCase().includes(searchText) ||
+    yojna.department?.toLowerCase().includes(searchText)
+  )
+}
   const makePageHref = (targetPage: number) => {
     const params = new URLSearchParams()
     if (categorySlug) params.set('category', categorySlug)
@@ -173,7 +168,7 @@ const yojnaCount = await payload.count({
 </div>
 
         <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {yojnas.docs.map((yojna) => (
+          {filteredDocs.map((yojna) => (
             <YojnaCard key={yojna.id} yojna={yojna} />
           ))}
         </div>

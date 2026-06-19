@@ -29,7 +29,7 @@ export default async function Page() {
   return (
     <div className="pb-24">
       <PageClient />
-     <div className="relative overflow-hidden bg-gradient-to-r from-blue-200 via-blue-250 to-indigo-900 text-white">
+    <div className="relative overflow-hidden bg-gradient-to-r from-green-600 via-green-700 to-green-900 text-white">
   <div className="container py-16">
   <span className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur">
     Government of Chhattisgarh
@@ -39,7 +39,7 @@ export default async function Page() {
     Latest News & Announcements
   </h1>
 
-  <p className="mt-4 max-w-3xl text-lg text-blue-30">
+  <p className="mt-4 max-w-3xl text-lg text-green-100">
     Stay updated with official notifications, welfare scheme updates,
     district initiatives and public announcements from Raipur District Administration.
   </p>

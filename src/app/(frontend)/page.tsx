@@ -334,43 +334,7 @@ const sortedCategories = categories.docs
     })}
   </div>
 </section>
-      {/* <section className="container py-8">
-  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-
-    <div className="rounded-xl border bg-card p-5 text-center shadow-sm">
-      <div className="text-3xl">🔍</div>
-      <h3 className="mt-2 font-bold">Easy Search</h3>
-      <p className="text-sm text-muted-foreground">
-        Find schemes quickly
-      </p>
-    </div>
-
-    <div className="rounded-xl border bg-card p-5 text-center shadow-sm">
-      <div className="text-3xl">✅</div>
-      <h3 className="mt-2 font-bold">Eligibility Check</h3>
-      <p className="text-sm text-muted-foreground">
-        Check eligibility instantly
-      </p>
-    </div>
-
-    <div className="rounded-xl border bg-card p-5 text-center shadow-sm">
-      <div className="text-3xl">📄</div>
-      <h3 className="mt-2 font-bold">Application Guide</h3>
-      <p className="text-sm text-muted-foreground">
-        Application process details
-      </p>
-    </div>
-
-    <div className="rounded-xl border bg-card p-5 text-center shadow-sm">
-      <div className="text-3xl">📢</div>
-      <h3 className="mt-2 font-bold">Latest Updates</h3>
-      <p className="text-sm text-muted-foreground">
-        Government announcements
-      </p>
-    </div>
-
-  </div>
-</section> */}
+     
 <section className="container py-12">
   <div className="text-center mb-10">
     <h2 className="text-3xl font-bold">
@@ -384,13 +348,13 @@ const sortedCategories = categories.docs
 
   <div className="grid gap-6 md:grid-cols-3">
 
-    {/* Step 1 */}
+    
     <div className="rounded-2xl border bg-white p-8 text-center shadow-sm transition hover:shadow-xl">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl font-bold text-green-700">
         1
       </div>
 
-      <h3 className="mt-5 text-xl font-bold">
+      <h3 className="mt-3 text-lg font-bold">
         योजना चुनें
       </h3>
 
@@ -399,13 +363,13 @@ const sortedCategories = categories.docs
       </p>
     </div>
 
-    {/* Step 2 */}
+  
     <div className="rounded-2xl border bg-white p-8 text-center shadow-sm transition hover:shadow-xl">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-2xl font-bold text-blue-700">
         2
       </div>
 
-      <h3 className="mt-5 text-xl font-bold">
+      <h3 className="mt-3 text-xl font-bold">
         पात्रता जाँचें
       </h3>
 
@@ -414,13 +378,13 @@ const sortedCategories = categories.docs
       </p>
     </div>
 
-    {/* Step 3 */}
+    
     <div className="rounded-2xl border bg-white p-8 text-center shadow-sm transition hover:shadow-xl">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-2xl font-bold text-orange-700">
         3
       </div>
 
-      <h3 className="mt-5 text-xl font-bold">
+      <h3 className="mt-3 text-xl font-bold">
         आवेदन करें
       </h3>
 
